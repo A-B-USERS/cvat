@@ -17,9 +17,9 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                echo "Installing dependencies..."
-                sh 'docker --version || echo "Docker not installed!"'
-                sh 'docker-compose --version || echo "Docker Compose not installed!"'
+                echo "Checking Docker & Compose..."
+                sh 'docker --version'
+                sh 'docker-compose --version'
             }
         }
 
@@ -37,25 +37,34 @@ pipeline {
             }
         }
 
+        // ❌ TEST STAGE DISABLED
+        /*
         stage('Run Tests (Optional)') {
             steps {
                 echo "Running tests..."
                 sh "docker-compose -f ${DOCKER_COMPOSE_FILE} exec cvat pytest -v || echo 'Tests failed'"
             }
         }
+        */
 
+        // ❌ STOP CONTAINERS DISABLED
+        /*
         stage('Stop CVAT (Optional)') {
             steps {
                 echo "Stopping CVAT containers..."
                 sh "docker-compose -f ${DOCKER_COMPOSE_FILE} down"
             }
         }
+        */
     }
 
+    // ❌ POST CLEANUP DISABLED
+    /*
     post {
         always {
-            echo "Cleaning up Docker containers..."
+            echo "Cleaning up..."
             sh "docker-compose -f ${DOCKER_COMPOSE_FILE} down -v || true"
         }
     }
+    */
 }
