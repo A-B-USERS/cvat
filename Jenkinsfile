@@ -3,36 +3,66 @@ pipeline {
 
     environment {
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
-        PROJECT_NAME = 'cvat'
-        CVAT_HOST = '192.168.0.112'  // <-- add your server IP here
+        CVAT_HOST = 'localhost'  // yahan apna host ya IP daal sakte ho
     }
 
     stages {
-        stage('Checkout') { steps { checkout scm } }
-
-        stage('Install Dependencies') {
+        stage('Checkout SCM') {
             steps {
-                sh 'docker --version || echo "Docker not installed!"'
-                sh 'docker-compose --version || echo "Docker Compose not installed!"'
+                echo "Cloning CVAT repository..."
+                checkout([$class: 'GitSCM',
+                    branches: [[name: 'develop']],
+                    userRemoteConfigs: [[url: 'https://github.com/A-B-USERS/cvat.git']]
+                ])
+            }
+        }
+
+        stage('Check Docker & Compose') {
+            steps {
+                sh 'docker --version'
+                sh 'docker-compose --version'
             }
         }
 
         stage('Build Docker Images') {
             steps {
+                echo "Building Docker images..."
                 sh "docker-compose -f ${DOCKER_COMPOSE_FILE} build"
             }
         }
 
-        stage('Run CVAT') {
+        stage('Start CVAT') {
             steps {
+                echo "Starting CVAT containers..."
                 sh "docker-compose -f ${DOCKER_COMPOSE_FILE} up -d"
+            }
+        }
+
+        stage('Verify Containers') {
+            steps {
+                echo "Listing running containers..."
+                sh "docker ps"
+            }
+        }
+
+        stage('Optional Cleanup') {
+            steps {
+                script {
+                    def doCleanup = input(id: 'confirm', message: 'Do you want to stop and remove CVAT containers?', parameters: [booleanParam(defaultValue: false, description: 'Check to cleanup', name: 'Cleanup')])
+                    if (doCleanup) {
+                        sh "docker-compose -f ${DOCKER_COMPOSE_FILE} down -v"
+                    }
+                }
             }
         }
     }
 
     post {
-        always {
-            sh "docker-compose -f ${DOCKER_COMPOSE_FILE} down -v || true"
+        success {
+            echo 'Pipeline finished successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
