@@ -258,6 +258,8 @@ services:
       traefik.http.services.cvat-ui.loadbalancer.server.port: "8000"
       traefik.http.routers.cvat-ui.rule: Host(`${CVAT_HOST}`)
       traefik.http.routers.cvat-ui.entrypoints: web
+    ports:
+      - "9091:8080"      # <-- host port 9091 -> container port 8080
     networks:
       - cvat
 
